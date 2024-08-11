@@ -7,17 +7,23 @@ Original file is located at
     https://colab.research.google.com/drive/1iQwO6O96uFOZyeZGRvwyeDLiMS88Bm4b
 """
 
-!pip install streamlit -q
+import subprocess
+import sys
 
-from google.colab import drive
+# Install streamlit
+subprocess.check_call([sys.executable, "-m", "pip", "install", "streamlit", "-q"])
+
 import gdown
 import streamlit as st
 import joblib
 import pandas as pd
+import requests
+from joblib import load
 from sklearn.preprocessing import LabelEncoder
 from sklearn.base import BaseEstimator, TransformerMixin
 
-drive.mount('/content/drive')
+import warnings
+warnings.filterwarnings('ignore')
 
 class FeatureEngineering(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
@@ -72,7 +78,14 @@ label_encoder.fit(data['Credit_Score'])
 custom_encoder = CustomEncoder()
 data_transformed = custom_encoder.fit_transform(data)
 
-pipeline = joblib.load('/content/drive/My Drive/best_pipeline_credit.joblib')
+url = 'https://drive.google.com/uc?id=1PsAdcOZx-FateAgSuXcDdIYRnvjTlX8b'
+output = 'best_pipeline_credit.joblib'
+response = requests.get(url)
+with open(output, 'wb') as f:
+    f.write(response.content)
+
+# Load the joblib file
+pipeline = load(output)
 
 st.title('Credit Score Prediction')
 
@@ -82,7 +95,7 @@ Month = st.number_input('Month', min_value=1, max_value=12, value=7)
 Name = st.text_input('Name', 'John Doe')
 Age = st.number_input('Age', min_value=14, max_value=100, value=30)
 SSN = st.text_input('SSN', '123-45-6789')
-Occupation = st.text_input('Occupation', 'Engineer')
+Occupation = st.selectbox('Occupation', ['Lawyer', 'Engineer', 'Architect', 'Mechanic', 'Scientist', 'Accountant', 'Developer', 'Media_Manager', 'Teacher','Entrepreneur', 'Doctor', 'Journalist', 'Manager', 'Musician', 'Writer'], index=1)
 Annual_Income = st.number_input('Annual_Income', min_value=1000, value=50000)
 Monthly_Inhand_Salary = st.number_input('Monthly_Inhand_Salary', min_value=100, value=4000)
 Num_Bank_Accounts = st.number_input('Num_Bank_Accounts', min_value=1, value=2)
@@ -143,7 +156,7 @@ if st.button('Predict Score'):
         score_text = [key for key, value in credit_score_mapping.items() if value == score_label][0]
         st.markdown(f"""
             <div style="display: flex; justify-content: center; align-items: center; padding: 10px; border: 2px solid #4CAF50; border-radius: 10px; background-color: #f9f9f9; margin-top: 20px;">
-                <h2 style="color: #4CAF50;">The predicted Credit Score is: {score_text}</h2>
+                <h2 style="color: #4CAF50;">The Predicted Credit Score is: {score_text}</h2>
             </div>
         """, unsafe_allow_html=True)
     except KeyError as e:
